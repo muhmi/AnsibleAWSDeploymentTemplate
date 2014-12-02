@@ -1,0 +1,17 @@
+# Elixir
+
+- name: Add Erlang Solutions APT repository
+  apt_repository: repo='deb http://packages.erlang-solutions.com/ubuntu trusty contrib' state=present update_cache=yes
+
+- name: Install build tools
+  apt: pkg=build-essential state=latest
+
+- name: Install Erlang (of course)
+  apt: pkg={{item}} state=latest force=yes
+  with_items:
+      - erlang
+      - erlang-ssl
+
+- name: Install Elixir
+  apt: pkg=elixir state=latest force=yes
+

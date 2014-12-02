@@ -1,0 +1,86 @@
+---
+# Note: borrowing heavily from https://github.com/ansible/immutablish-deploys
+# Launch a new EC2 instance that we will use for creating the AMI
+- hosts: amibuilder
+  connection: local
+  gather_facts: no
+
+  vars_files:
+    - vars.yml
+  
+  tasks:
+    - name: Launch Baker instance
+      local_action:
+        module: ec2
+        key_name: "{{key_name}}"
+        group: "{{project_name}}}"
+        instance_type: c3.2xlarge
+        instance_profile_name: "{{baker_iam}}"
+        image: "{{base_ami}}"
+        assign_public_ip: yes
+        wait: true
+        count: 1
+        region: "{{region}}"
+        vpc_subnet_id: "{{vpc_subnet_id}}"
+      register: ami_instance
+
+    - name: Tag instances
+      local_action: ec2_tag resource={{item.id}} state=present region="{{region}}" host={{ ami_instance.tagged_instances.0.public_ip }}
+      args:
+        tags:
+          Name: "{{project_name}}Baker"
+
+    - name: Wait for the instances to boot by checking the SSH port
+      local_action: wait_for host={{item.public_dns_name}} port=22 delay=60 timeout=320 state=started host={{ ami_instance.tagged_instances.0.public_ip }}
+
+    - name: Add new instances to host group
+      local_action: add_host hostname={{item.public_ip}} groupname=just_created host={{ ami_instance.tagged_instances.0.public_ip }}
+
+# Install software on the new shine instance
+- name: Configure instance
+  hosts: just_created
+  user: ubuntu
+  sudo: yes
+
+  vars_files:
+    - vars.yml
+
+  tasks:
+    - include: tasks/common_packages.yml
+    - include: tasks/elixir.yml
+    - include: tasks/limits.yml
+
+- hosts: amibuilder
+  connection: local
+  gather_facts: no
+
+  vars_files:
+    - vars.yml
+
+  tasks:
+    - name: Create AMI
+      local_action:
+        module: ec2_ami
+        instance_id: '{{ ec2.instance_ids }}'
+        wait: yes
+        name: "{{project_name}}/{{timestamp}}"
+        description: "by={{creator}} base={{base_ami}} git_commit={{git_commit}}"
+      register: amioutput
+
+    - name: Create vars file with new ami info
+      copy:
+        content: |
+               server_image_id: {{ amioutput.image_id }}
+               server_image_git_commit: {{ git_commit }}
+               lc_suffix: {{ ansible_date_time.epoch }}
+        dest: settings.yml
+
+    - name: Terminate instances
+      hosts: localhost
+      connection: local
+      tasks:
+        - name: Terminate instances that were previously launched
+          local_action:
+            module: ec2
+            state: 'absent'
+            instance_ids: '{{ ec2.instance_ids }}'

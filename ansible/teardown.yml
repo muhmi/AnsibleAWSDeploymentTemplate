@@ -1,0 +1,76 @@
+---
+#
+# Teardown security group(s) and IAM roles
+#
+#
+- hosts: localhost
+  connection: local
+  gather_facts: no
+
+  vars_files:
+    - vars.yml
+    - vpc_settings.yml
+
+  tasks:
+
+    - name: Drop security groups
+      local_action:
+        module: ec2_group
+        name: "{{project_name}}"
+        description: "{{project_name}} game server security group"
+        vpc_id: "{{vpc_id}}"
+        region: "{{region}}"
+        state: absent
+
+    - name: Drop VPC
+      local_action:
+        module: ec2_vpc
+        region: "{{region}}"
+        resource_tags: { "Name":"{{project_name}}" }
+        state: absent
+        vpc_id: "{{vpc_id}}"
+
+    - name: "Drop role from {{item}}InstanceProfile"
+      local_action:
+        region: "us-east-1"
+        module: aws_iam_instance_profile_role
+        profile_name: "{{item}}InstanceProfile"
+        role_name: "{{item}}"
+        state: absent
+      with_items:
+        - "{{baker_iam}}"
+        - "{{instance_iam}}"
+    - name: "Drop instance profile {{item}}"
+      local_action:
+        region: "us-east-1"
+        module: aws_iam_instance_profile
+        profile_name: "{{item}}InstanceProfile"
+        state: absent
+      with_items:
+        - "{{baker_iam}}"
+        - "{{instance_iam}}"
+    - name: "Drop policy {{item}}-EC2-Permissions"
+      local_action:
+        module: aws_iam_role_policy
+        region: "us-east-1"
+        role_name: "{{item}}"
+        policy_name: "{{item}}-EC2-Permissions"
+        state: absent
+      with_items:
+        - "{{baker_iam}}"
+        - "{{instance_iam}}"
+    - name: "Drop IAM role"
+      local_action:
+        region: "us-east-1"
+        module: aws_iam_role
+        role_name: "{{item}}"
+        state: absent
+      with_items:
+        - "{{baker_iam}}"
+        - "{{instance_iam}}"
+    - name: Delete key pair
+      local_action:
+        module: ec2_key
+        region: "{{region}}"
+        name: "{{private_key}}"
+        state: absent

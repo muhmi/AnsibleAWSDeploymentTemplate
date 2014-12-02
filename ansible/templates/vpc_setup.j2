@@ -1,0 +1,5 @@
+vpc_id: {{ vpc.vpc_id }}
+vpc_subnets:
+{% for i in vpc.subnets %}
+  - {{  i.id }}
+{% endfor %}
