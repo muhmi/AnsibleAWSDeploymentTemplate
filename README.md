@@ -10,6 +10,7 @@ Very much work in progress but now these bits of scripts do:
 TODO:
 
 	- Fix the AMI bake step
+	- Update my custom IAM modules to support inlining policy documents?
 	- Create an ASG from the AMI
 	- Create some example hello world deployment with CodeDeploy
 
