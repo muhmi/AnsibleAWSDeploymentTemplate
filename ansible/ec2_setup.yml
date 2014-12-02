@@ -1,6 +1,6 @@
 ---
 #
-# Configure VPC, Security group, IAM roles and Instance profiles
+# Configure VPC, Security group(s)
 #
 #
 - hosts: localhost
@@ -76,39 +76,4 @@
             to_port: 8080
             cidr_ip: 0.0.0.0/0
 
-    - name: "Create IAM role {{item}}"
-      local_action:
-        region: "us-east-1"
-        module: aws_iam_role
-        role_name: "{{item}}"
-        assume_role_policy_document: "iam/{{item}}-EC2-Trust.json"
-      with_items:
-        - "{{baker_iam}}"
-        - "{{instance_iam}}"
-    - name: "Upload policy {{item}}-EC2-Permissions"
-      local_action:
-        module: aws_iam_role_policy
-        region: "us-east-1"
-        role_name: "{{item}}"
-        policy_name: "{{item}}-EC2-Permissions"
-        policy_document: "iam/{{item}}-EC2-Permissions.json"
-      with_items:
-        - "{{baker_iam}}"
-        - "{{instance_iam}}"
-    - name: "Create instance profile {{item}}"
-      local_action:
-        region: "us-east-1"
-        module: aws_iam_instance_profile
-        profile_name: "{{item}}InstanceProfile"
-      with_items:
-        - "{{baker_iam}}"
-        - "{{instance_iam}}"
-    - name: "Add our {{item}} to instance profile {{item}}InstanceProfile"
-      local_action:
-        region: "us-east-1"
-        module: aws_iam_instance_profile_role
-        profile_name: "{{item}}InstanceProfile"
-        role_name: "{{item}}"
-      with_items:
-        - "{{baker_iam}}"
-        - "{{instance_iam}}"
+   

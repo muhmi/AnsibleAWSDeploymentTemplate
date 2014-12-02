@@ -1,13 +1,17 @@
 
-#
+# 
 PROJECT := DeployTest
 REGION := eu-central-1
 
-KEY_NAME := $(PROJECT)
+# ^- Little gotcha there that the Ansible scripts (for now) assume you have ansible/iam/{project}*.json files
+# It can feed to IAM as policy documents
 
 # Ubuntu from market place, we install our software on to and make our AMI from
 BASE_AMI_ID := ami-2651904e
 BASE_AMI_SNAPSHOT_ID := snap-a74a6e0f
+
+# private key
+KEY_NAME := $(PROJECT)
 
 # you should limit its access to S3 buckets really needed 
 # for. ex. http://docs.aws.amazon.com/codedeploy/latest/userguide/how-to-create-iam-instance-profile.html
@@ -19,17 +23,28 @@ BAKE_IAM_ROLE_NAME := $(IAM_ROLE_NAME)Baker
 TIMESTAMP := $(shell date +%Y%m%d%H%M%S)
 GIT_COMMIT_HASH := $(shell git rev-parse --verify HEAD)
 
-# Setup our deployment env by creating some InstanceProfiles and SecurityGroups
-env-setup: ansible/vars.yml
+setup: iam-setup ec2-setup
+
+teardown: ec2-setup iam-setup
+
+iam-setup: ansible/vars.yml
 	@cd ansible && ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook \
-		-i hosts setup.yml \
+		-i hosts iam_setup.yml \
 		--extra-vars="timestamp=$(TIMESTAMP)"
 
-# Run this to take the env down, you should stop the instances first and 
-# remove all stuff created outside setup.yml
-env-teardown: ansible/vars.yml
+iam-teardown: ansible/vars.yml
 	@cd ansible && ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook \
-		-i hosts teardown.yml \
+		-i hosts iam_teardown.yml \
+		--extra-vars="timestamp=$(TIMESTAMP)"
+
+ec2-setup: ansible/vars.yml
+	@cd ansible && ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook \
+		-i hosts ec2_setup.yml \
+		--extra-vars="timestamp=$(TIMESTAMP)"
+
+ec2-teardown: ansible/vars.yml
+	@cd ansible && ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook \
+		-i hosts ec2_teardown.yml \
 		--extra-vars="timestamp=$(TIMESTAMP)"
 
 # After setup you can run this to create the "golden AMI"
@@ -48,8 +63,8 @@ ami-bake: ansible/vars.yml
 #		--deployment-group-name $(PROJECT)Instances \
 #		--ec2-tag-filters "Key=Group,Value=$(IAM_ROLE_NAME)InstanceProfile"
 
-# TODO: This is quite horrible :D but I havent bothered to figure out if here docs work with Makefiles?
-ansible/vars.yml: ansible/setup.yml ansible/teardown.yml ansible/bake.yml Makefile
+# Yeah... but for now I want to drive some parameters from this Makefile instead of just using Ansible
+ansible/vars.yml: 
 	$(shell echo '---' > ansible/vars.yml)
 	$(shell echo "project_name: $(PROJECT)" >> ansible/vars.yml)
 	$(shell echo "private_key: $(KEY_NAME)" >> ansible/vars.yml)
@@ -68,4 +83,4 @@ clean:
 	@rm -f user-data.txt
 	@rm -f ansible/vars.yml
 
-.PHONY: launch-instance clean bake setup teardown ami-describe
+.PHONY: launch-instance clean bake setup teardown ec2-setup ec2-teardown iam-setup iam-teardown ami-describe
