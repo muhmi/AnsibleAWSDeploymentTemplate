@@ -80,7 +80,6 @@ ami-describe:
 	@aws ec2 describe-images --image-id $(AMI_ID)
 
 clean:
-	@rm -f user-data.txt
 	@rm -f ansible/vars.yml
 
 .PHONY: launch-instance clean bake setup teardown ec2-setup ec2-teardown iam-setup iam-teardown ami-describe

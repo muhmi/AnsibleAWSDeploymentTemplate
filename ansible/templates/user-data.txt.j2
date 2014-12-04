@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# A very crude and ugly script just to tag our running instance based on the InstanceProfile
+# A very crude and ugly script just to tag our running instance 
 #
 #
 
@@ -8,13 +8,12 @@ EC2_AVAIL_ZONE="`wget -q -O - http://169.254.169.254/latest/meta-data/placement/
 EC2_INSTANCE_ID=$(wget -q -O - http://169.254.169.254/latest/meta-data/instance-id)
 EC2_REGION="`echo \"$EC2_AVAIL_ZONE\" | sed -e 's:\([0-9][0-9]*\)[a-z]*\$:\\1:'`"
 
-IAM_PROFILE=$(wget -q -O - http://169.254.169.254/latest/meta-data/iam/security-credentials | head -1)
+GROUP_NAME="{{ project_name }}"
 
-# Name the server as {{profile}}-{{instance_id}}
 aws ec2 create-tags \
 	--region $EC2_REGION \
 	--resources $EC2_INSTANCE_ID \
 	--tags \
-		"Key=Name,Value=$IAM_PROFILE-$EC2_INSTANCE_ID" \
-		"Key=Group,Value=$IAM_PROFILE"
+		"Key=Name,Value=$GROUP_NAME-$EC2_INSTANCE_ID" \
+		"Key=Group,Value=$GROUP_NAME"
 
