@@ -13,6 +13,7 @@
     - name: Launch Baker instance
       local_action:
         module: ec2
+        region: "{{region}}"
         key_name: "{{key_name}}"
         group: "{{project_name}}}"
         instance_type: c3.2xlarge
@@ -20,20 +21,17 @@
         image: "{{base_ami}}"
         assign_public_ip: yes
         wait: true
-        count: 1
-        region: "{{region}}"
+        exact_count: 1
+        count_tag:
+          Name: "{{project_name}}Baker"
         vpc_subnet_id: "{{vpc_subnets|random}}"
       register: ec2
 
     - name: Tag instances
-      local_action: 
-        module: ec2_tag
-        resource: "{{item.id}}"
-        state: present
-        region: "{{region}}"
-        args:
-          tags:
-            Name: "{{project_name}}Baker"
+      local_action: ec2_tag resource="{{item.id}}" state=present region="{{region}}"
+      args:
+        tags:
+          Name: "{{project_name}}Baker"
       with_items: ec2.instances
 
     - name: Add new instances to host group
