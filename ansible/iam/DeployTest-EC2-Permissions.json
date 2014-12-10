@@ -3,14 +3,30 @@
   "Statement": [
     {
       "Action": [
-        "s3:Get*",
-        "s3:List*",
-        "s3:Put*",
-        "ec2:CreateTags",
-        "ec2:DeleteTags"
+        "autoscaling:*",
+        "codedeploy:*",
+        "ec2:*",
+        "elasticloadbalancing:*",
+        "iam:AddRoleToInstanceProfile",
+        "iam:CreateInstanceProfile",
+        "iam:CreateRole",
+        "iam:DeleteInstanceProfile",
+        "iam:DeleteRole",
+        "iam:DeleteRolePolicy",
+        "iam:GetInstanceProfile",
+        "iam:GetRole",
+        "iam:GetRolePolicy",
+        "iam:ListInstanceProfilesForRole",
+        "iam:ListRolePolicies",
+        "iam:ListRoles",
+        "iam:PassRole",
+        "iam:PutRolePolicy",
+        "iam:RemoveRoleFromInstanceProfile", 
+        "s3:*"
       ],
       "Effect": "Allow",
       "Resource": "*"
     }
   ]
 }
+
