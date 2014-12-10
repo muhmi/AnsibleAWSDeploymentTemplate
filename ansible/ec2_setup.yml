@@ -50,6 +50,13 @@
         mode: 0400
       when: "result.changed"
 
+    - name: "Create S3 bucket {{project_s3_bucket}} for {{project_name}}"
+      local_action:
+        module: s3
+        bucket: "{{project_s3_bucket}}"
+        mode: create
+        region: "{{region}}"
+
     - name: Configure security groups
       local_action:
         module: ec2_group

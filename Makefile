@@ -1,7 +1,8 @@
 
 # 
 PROJECT := DeployTest
-REGION := eu-central-1
+PROJECT_S3_BUCKET := somehow-uniq-deploytest
+REGION := us-east-1
 
 # ^- Little gotcha there that the Ansible scripts (for now) assume you have ansible/iam/{project}*.json files
 # It can feed to IAM as policy documents
@@ -22,6 +23,9 @@ BAKE_IAM_ROLE_NAME := $(IAM_ROLE_NAME)Baker
 
 TIMESTAMP := $(shell date +%Y%m%d%H%M%S)
 GIT_COMMIT_HASH := $(shell git rev-parse --verify HEAD)
+
+APP_VERSION_LOG := "$(TIMESTAMP) $(shell git log --oneline -1)"
+APP_S3_KEY := "$(TIMESTAMP)-$(PROJECT).zip"
 
 setup: iam-setup ec2-setup
 
@@ -55,13 +59,27 @@ ami-bake: ansible/vars.yml
 		-i hosts bake.yml \
 		--extra-vars="timestamp=$(TIMESTAMP)"
 
-# this will contain all the stuff needed to create an Application for AWS CodeDeploy
-#codedeploy-setup:
-#	@aws deploy create-application --application-name $(PROJECT)
-#	@aws deploy create-deployment-group \
-#		--application-name $(PROJECT) \
-#		--deployment-group-name $(PROJECT)Instances \
-#		--ec2-tag-filters "Key=Group,Value=$(IAM_ROLE_NAME)InstanceProfile"
+# adding codedeploy stuff here so I remember what I need to do
+
+codedeploy-create-app:
+	aws deploy create-application --application-name $(PROJECT)
+
+# target ec2 instances with certain tag for deployment
+codedeploy-create-deployment:
+	aws deploy create-deployment-group \
+		--application-name $(PROJECT) \
+		--deployment-group-name $(PROJECT)Instances \
+		--ec2-tag-filters "Key=Group,Value=$(PROJECT),Type=KEY_AND_VALUE" \
+		--service-role-arn $(shell aws iam get-role --role-name CodeDeploy --query "Role.Arn" --output text)
+
+# package and upload a new version of the application
+codedeploy-push:
+	aws deploy push \
+		--application-name $(PROJECT) \
+		--description $(APP_VERSION_LOG) \
+		--ignore-hidden-files \
+		--s3-location s3://$(PROJECT_S3_BUCKET)/$(APP_S3_KEY) \
+		--source application
 
 # Yeah... but for now I want to drive some parameters from this Makefile instead of just using Ansible
 ansible/vars.yml: 
@@ -75,6 +93,7 @@ ansible/vars.yml:
 	$(shell echo "key_name: $(KEY_NAME)" >> ansible/vars.yml)
 	$(shell echo "creator: $$USER" >> ansible/vars.yml)
 	$(shell echo "git_commit: $(GIT_COMMIT_HASH)" >> ansible/vars.yml)
+	$(shell echo "project_s3_bucket: $(PROJECT_S3_BUCKET)" >> ansible/vars.yml)
 
 ami-describe:
 	@aws ec2 describe-images --image-id $(AMI_ID)
@@ -82,4 +101,4 @@ ami-describe:
 clean:
 	@rm -f ansible/vars.yml
 
-.PHONY: launch-instance clean bake setup teardown ec2-setup ec2-teardown iam-setup iam-teardown ami-describe
+.PHONY: launch-instance clean bake setup teardown ec2-setup ec2-teardown iam-setup iam-teardown ami-describe ansible/vars.yml

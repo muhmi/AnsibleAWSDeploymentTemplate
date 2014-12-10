@@ -15,6 +15,7 @@
       with_items:
         - "{{baker_iam}}"
         - "{{instance_iam}}"
+        - "CodeDeploy"
     - name: "Upload policy {{item}}-EC2-Permissions"
       local_action:
         module: aws_iam_role_policy
@@ -25,6 +26,7 @@
       with_items:
         - "{{baker_iam}}"
         - "{{instance_iam}}"
+        - "CodeDeploy"
     - name: "Create instance profile {{item}}"
       local_action:
         region: "us-east-1"
@@ -33,6 +35,7 @@
       with_items:
         - "{{baker_iam}}"
         - "{{instance_iam}}"
+        - "CodeDeploy"
     - name: "Add our {{item}} to instance profile {{item}}InstanceProfile"
       local_action:
         region: "us-east-1"
@@ -42,3 +45,4 @@
       with_items:
         - "{{baker_iam}}"
         - "{{instance_iam}}"
+        - "CodeDeploy"
