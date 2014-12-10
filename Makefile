@@ -29,7 +29,7 @@ APP_S3_KEY := "$(TIMESTAMP)-$(PROJECT).zip"
 
 setup: iam-setup ec2-setup
 
-teardown: ec2-setup iam-setup
+teardown: ec2-teardown iam-teardown
 
 iam-setup: ansible/vars.yml
 	@cd ansible && ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook \
