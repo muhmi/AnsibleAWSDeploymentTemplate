@@ -1,0 +1,8 @@
+version: 0.0
+os: linux
+files:
+  - source: /
+    destination: /apps/hello
+hooks:
+	ApplicationStart:
+	  - location: scripts/start.sh
