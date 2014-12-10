@@ -54,7 +54,7 @@ ec2-teardown: ansible/vars.yml
 # After setup you can run this to create the "golden AMI"
 # remember to update GAME_SERVER_AMI_ID after that!
 ami-bake: ansible/vars.yml
-	@cd ansible && ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook \
+	cd ansible && ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook \
 		--private-key=$(REGION)-$(KEY_NAME).pem \
 		-i hosts bake.yml \
 		--extra-vars="timestamp=$(TIMESTAMP)"
