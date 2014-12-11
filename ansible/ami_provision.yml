@@ -1,0 +1,12 @@
+- name: Install stuff
+  hosts: just_created
+  user: ubuntu
+  sudo: yes
+
+  vars_files:
+    - vars.yml
+
+  tasks:
+    - include: tasks/common_packages.yml
+    - include: tasks/elixir.yml
+    - include: tasks/limits.yml

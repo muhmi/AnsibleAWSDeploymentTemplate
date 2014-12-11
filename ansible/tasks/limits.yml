@@ -1,8 +1,8 @@
 - name: Fix file descriptor limits
-  sysctl: name=fs.file-max value=65535 state=present
+  sysctl: name="fs.file-max" value="65535" state=present
 
 - name: 
-  sysctl: name=net.ipv4.ip_local_port_range value=1024 65535 state=present
+  sysctl: name="net.ipv4.ip_local_port_range" value="1024 65535" state=present
 
 - name: Security limits
   lineinfile: dest=/etc/security/limits.conf line="*       soft    nofile  65535" state=present

@@ -1,0 +1,32 @@
+# Bundle AMI and terminate instance
+- hosts: amibuilder
+  connection: local
+  gather_facts: no
+  vars_files:
+    - vars.yml
+  tasks:
+
+  - name: bundle ami
+    action: 
+      module: ec2_ami
+      instance_id: "{{ ami_instance.tagged_instances.0.id }}"
+      region: "{{ region }}"
+      state: present
+      description: "ts={{ timestamp }} project={{project_name}} git={{git_commit}}"
+      name: "{{project_name}}-{{ timestamp }}"
+      wait: yes
+    register: amioutput
+
+  - name: terminate temporary instance
+    action:
+      module: ec2
+      state: absent
+      region: "{{ region }}"
+      instance_ids: "{{ ami_instance.tagged_instances.0.id }}"
+
+  - name: create vars file with  new ami info
+    copy:
+      content: |
+             image_id: {{ amioutput.image_id }}
+      dest: vars/settings.yml
+    when: deploy is defined and deploy|bool == True
