@@ -28,5 +28,4 @@
     copy:
       content: |
              image_id: {{ amioutput.image_id }}
-      dest: vars/settings.yml
-    when: deploy is defined and deploy|bool == True
+      dest: vars/ami_settings.yml
