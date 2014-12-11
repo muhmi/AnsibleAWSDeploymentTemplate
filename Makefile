@@ -21,6 +21,9 @@ IAM_ROLE_NAME := $(PROJECT)
 # This role is only used for creating AMIs it needs more access to EC2, fix ansible/iam/{IAM_ROLE_NAME}Baker*.json
 BAKE_IAM_ROLE_NAME := $(IAM_ROLE_NAME)Baker
 
+# List of IAM roles managed by us
+IAM_ROLES := $(IAM_ROLE_NAME) $(BAKE_IAM_ROLE_NAME) CodeDeploy
+
 TIMESTAMP := $(shell date +%Y%m%d%H%M%S)
 GIT_COMMIT_HASH := $(shell git rev-parse --verify HEAD)
 
@@ -32,14 +35,19 @@ setup: iam-setup ec2-setup
 teardown: ec2-teardown iam-teardown
 
 iam-setup: ansible/vars.yml
-	@cd ansible && ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook \
-		-i hosts iam_setup.yml \
-		--extra-vars="timestamp=$(TIMESTAMP)"
+	@cd ansible && for role in $(IAM_ROLES); do \
+		echo "Creating IAM Role $$role"; \
+		ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook \
+			-i hosts iam_setup.yml \
+			--extra-vars="timestamp=$(TIMESTAMP); iam_role=$$role"; \
+	done
 
 iam-teardown: ansible/vars.yml
-	@cd ansible && ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook \
-		-i hosts iam_teardown.yml \
-		--extra-vars="timestamp=$(TIMESTAMP)"
+	@cd ansible && for role in $(IAM_ROLES); do \
+		ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook \
+			-i hosts iam_teardown.yml \
+			--extra-vars="timestamp=$(TIMESTAMP); iam_role=$$role"; \
+	done
 
 ec2-setup: ansible/vars.yml
 	@cd ansible && ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook \

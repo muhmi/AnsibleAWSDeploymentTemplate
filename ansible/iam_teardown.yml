@@ -2,45 +2,30 @@
   connection: local
   gather_facts: no
 
-  vars_files:
-    - vars.yml
-
   tasks:
-    - name: "Drop role from {{item}}InstanceProfile"
+    - name: "Drop role from {{iam_role}}InstanceProfile"
       local_action:
         region: "us-east-1"
         module: aws_iam_instance_profile_role
-        profile_name: "{{item}}InstanceProfile"
-        role_name: "{{item}}"
+        profile_name: "{{iam_role}}InstanceProfile"
+        role_name: "{{iam_role}}"
         state: absent
-      with_items:
-        - "{{baker_iam}}"
-        - "{{instance_iam}}"
-    - name: "Drop instance profile {{item}}"
+    - name: "Drop instance profile {{iam_role}}"
       local_action:
         region: "us-east-1"
         module: aws_iam_instance_profile
-        profile_name: "{{item}}InstanceProfile"
+        profile_name: "{{iam_role}}InstanceProfile"
         state: absent
-      with_items:
-        - "{{baker_iam}}"
-        - "{{instance_iam}}"
-    - name: "Drop policy {{item}}-EC2-Permissions"
+    - name: "Drop policy {{iam_role}}-EC2-Permissions"
       local_action:
         module: aws_iam_role_policy
         region: "us-east-1"
-        role_name: "{{item}}"
-        policy_name: "{{item}}-EC2-Permissions"
+        role_name: "{{iam_role}}"
+        policy_name: "{{iam_role}}-EC2-Permissions"
         state: absent
-      with_items:
-        - "{{baker_iam}}"
-        - "{{instance_iam}}"
     - name: "Drop IAM role"
       local_action:
         region: "us-east-1"
         module: aws_iam_role
-        role_name: "{{item}}"
+        role_name: "{{iam_role}}"
         state: absent
-      with_items:
-        - "{{baker_iam}}"
-        - "{{instance_iam}}"

@@ -2,47 +2,28 @@
   connection: local
   gather_facts: no
 
-  vars_files:
-    - vars.yml
-
   tasks:
-    - name: "Create IAM role {{item}}"
+    - name: "Create IAM role {{iam_role}}"
       local_action:
         region: "us-east-1"
         module: aws_iam_role
-        role_name: "{{item}}"
-        assume_role_policy_document: "iam/{{item}}-EC2-Trust.json"
-      with_items:
-        - "{{baker_iam}}"
-        - "{{instance_iam}}"
-        - "CodeDeploy"
-    - name: "Upload policy {{item}}-EC2-Permissions"
+        role_name: "{{iam_role}}"
+        assume_role_policy_document: "iam/{{iam_role}}-EC2-Trust.json"
+    - name: "Upload policy {{iam_role}}-EC2-Permissions"
       local_action:
         module: aws_iam_role_policy
         region: "us-east-1"
-        role_name: "{{item}}"
-        policy_name: "{{item}}-EC2-Permissions"
-        policy_document: "iam/{{item}}-EC2-Permissions.json"
-      with_items:
-        - "{{baker_iam}}"
-        - "{{instance_iam}}"
-        - "CodeDeploy"
-    - name: "Create instance profile {{item}}"
+        role_name: "{{iam_role}}"
+        policy_name: "{{iam_role}}-EC2-Permissions"
+        policy_document: "iam/{{iam_role}}-EC2-Permissions.json"
+    - name: "Create instance profile {{iam_role}}"
       local_action:
         region: "us-east-1"
         module: aws_iam_instance_profile
-        profile_name: "{{item}}InstanceProfile"
-      with_items:
-        - "{{baker_iam}}"
-        - "{{instance_iam}}"
-        - "CodeDeploy"
-    - name: "Add our {{item}} to instance profile {{item}}InstanceProfile"
+        profile_name: "{{iam_role}}InstanceProfile"
+    - name: "Add our {{iam_role}} to instance profile {{iam_role}}InstanceProfile"
       local_action:
         region: "us-east-1"
         module: aws_iam_instance_profile_role
-        profile_name: "{{item}}InstanceProfile"
-        role_name: "{{item}}"
-      with_items:
-        - "{{baker_iam}}"
-        - "{{instance_iam}}"
-        - "CodeDeploy"
+        profile_name: "{{iam_role}}InstanceProfile"
+        role_name: "{{iam_role}}"
