@@ -1,7 +1,5 @@
 ---
 #
-# Teardown security group(s) 
-#
 #
 - hosts: localhost
   connection: local
