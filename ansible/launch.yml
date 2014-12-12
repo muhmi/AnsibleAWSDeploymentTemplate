@@ -4,8 +4,8 @@
   gather_facts: no
 
   vars_files:
-    - ../generated/vars.yml
-    - ../generated/vpc_settings.yml
+    - generated/vars.yml
+    - generated/vpc_settings.yml
 
   tasks:
 

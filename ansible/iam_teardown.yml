@@ -2,6 +2,9 @@
   connection: local
   gather_facts: no
 
+  vars_files:
+    - generated/vars.yml
+
   tasks:
     - name: "Drop role from {{iam_role}}InstanceProfile"
       local_action:

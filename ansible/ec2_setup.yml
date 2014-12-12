@@ -6,14 +6,10 @@
 - hosts: localhost
   connection: local
   gather_facts: no
-
   vars_files:
-    - ../generated/vars.yml
-
+    - generated/vars.yml
   tasks:
     - include: tasks/key_create.yml
     - include: tasks/vpc_create.yml
     - include: tasks/s3_create.yml
     - include: tasks/sg_create.yml
-
-   

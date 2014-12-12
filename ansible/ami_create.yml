@@ -2,10 +2,11 @@
 - hosts: amibuilder
   connection: local
   gather_facts: no
-  vars_files:
-    - vars.yml
-  tasks:
 
+  var_files:
+    - generated/vars.yml
+  
+  tasks:
   - name: bundle ami
     action: 
       module: ec2_ami
@@ -28,4 +29,4 @@
     copy:
       content: |
              image_id: {{ amioutput.image_id }}
-      dest: ../generated/ami_settings.yml
+      dest: ./generated/ami_settings.yml

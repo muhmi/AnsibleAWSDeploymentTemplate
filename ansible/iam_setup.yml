@@ -1,7 +1,8 @@
 - hosts: localhost
   connection: local
   gather_facts: no
-
+  vars_files:
+    - generated/vars.yml
   tasks:
     - name: "Create IAM role {{iam_role}}"
       local_action:

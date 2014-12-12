@@ -27,5 +27,5 @@
   register: vpc
 
 - name: Persist VPC Config
-  template: src=templates/vpc_setup.j2 dest="../generated/vpc_settings.yml"
+  template: src=templates/vpc_setup.j2 dest="generated/vpc_settings.yml"
   when: "vpc.changed"

@@ -3,9 +3,9 @@
   user: ubuntu
   sudo: yes
 
-  vars_files:
-    - ../generated/vars.yml
-
+  var_files:
+    - generated/vars.yml
+  
   tasks:
     - include: tasks/common_packages.yml
     - include: tasks/elixir.yml

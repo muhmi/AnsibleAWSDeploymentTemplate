@@ -42,7 +42,6 @@ ifneq ("$(origin DRY_RUN)", "undefined")
 	ANSIBLE_OPTS := -C
 endif
 
-
 setup: iam-setup ec2-setup
 
 teardown: ec2-teardown iam-teardown
@@ -52,8 +51,8 @@ iam-setup: generate_vars
 		echo "Creating IAM Role $$role"; \
 		ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook \
 			-i inventory/local \
-			plays/iam_setup.yml \
-			--extra-vars="timestamp=$(TIMESTAMP); iam_role=$$role" $(ANSIBLE_OPTS); \
+			iam_setup.yml \
+			--extra-vars="iam_role=$$role" $(ANSIBLE_OPTS); \
 	done
 
 test:
@@ -64,21 +63,21 @@ iam-teardown: generate_vars
 		echo "Teardown IAM $$role"; \
 		ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook \
 			-i inventory/local \
-			plays/iam_teardown.yml \
-			--extra-vars="timestamp=$(TIMESTAMP); iam_role=$$role" $(ANSIBLE_OPTS); \
+			iam_teardown.yml \
+			--extra-vars="iam_role=$$role" $(ANSIBLE_OPTS); \
 	done
 
 ec2-setup: generate_vars
 	cd ansible && ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook \
 		-i inventory/local \
-		plays/ec2_setup.yml \
-		--extra-vars="timestamp=$(TIMESTAMP)" $(ANSIBLE_OPTS) 
+		ec2_setup.yml \
+		$(ANSIBLE_OPTS) 
 
 ec2-teardown: generate_vars
 	cd ansible && ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook \
 		-i inventory/local \
-		plays/ec2_teardown.yml \
-		--extra-vars="timestamp=$(TIMESTAMP)" $(ANSIBLE_OPTS) 
+		ec2_teardown.yml \
+		$(ANSIBLE_OPTS) 
 
 # After setup you can run this to create the "golden AMI"
 # remember to update GAME_SERVER_AMI_ID after that!
@@ -86,8 +85,8 @@ ami-bake: generate_vars
 	cd ansible && ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook \
 		--private-key=generated/$(REGION)-$(KEY_NAME).pem \
 		-i inventory/ec2.py \
-		plays/bake.yml \
-		--extra-vars="timestamp=$(TIMESTAMP)" $(ANSIBLE_OPTS) 
+		bake.yml \
+		$(ANSIBLE_OPTS) 
 
 # adding codedeploy stuff here so I remember what I need to do
 
@@ -111,19 +110,20 @@ codedeploy-push:
 		--s3-location s3://$(PROJECT_S3_BUCKET)/$(APP_S3_KEY) \
 		--source application
 
-# Yeah... but for now I want to drive some parameters from this Makefile instead of just using Ansible
-generate_vars: 
-	$(shell echo '---' > ansible/vars.yml)
-	$(shell echo "project_name: $(PROJECT)" >> ansible/vars.yml)
-	$(shell echo "private_key: $(KEY_NAME)" >> ansible/vars.yml)
-	$(shell echo "region: $(REGION)" >> ansible/vars.yml)
-	$(shell echo "baker_iam: $(BAKE_IAM_ROLE_NAME)"  >> ansible/vars.yml)
-	$(shell echo "instance_iam: $(IAM_ROLE_NAME)"  >> ansible/vars.yml)
-	$(shell echo "base_ami: $(BASE_AMI_ID)"  >> ansible/vars.yml)
-	$(shell echo "key_name: $(KEY_NAME)" >> ansible/vars.yml)
-	$(shell echo "creator: $$USER" >> ansible/vars.yml)
-	$(shell echo "git_commit: $(GIT_COMMIT_HASH)" >> ansible/vars.yml)
-	$(shell echo "project_s3_bucket: $(PROJECT_S3_BUCKET)" >> ansible/vars.yml)
+generate_vars:
+	$(shell echo "---" > ansible/generated/vars.yml)
+	$(shell echo "project_name: $(PROJECT)" >> ansible/generated/vars.yml)
+	$(shell echo "timestamp: $(TIMESTAMP)" >> ansible/generated/vars.yml)
+	$(shell echo "private_key: $(KEY_NAME)" >> ansible/generated/vars.yml)
+	$(shell echo "region: $(REGION)" >> ansible/generated/vars.yml)
+	$(shell echo "baker_iam: $(BAKE_IAM_ROLE_NAME)" >> ansible/generated/vars.yml)
+	$(shell echo "instance_iam: $(IAM_ROLE_NAME)" >> ansible/generated/vars.yml)
+	$(shell echo "base_ami: $(BASE_AMI_ID)" >> ansible/generated/vars.yml)
+	$(shell echo "key_name: $(KEY_NAME)" >> ansible/generated/vars.yml)
+	$(shell echo "creator: $$USER" >> ansible/generated/vars.yml)
+	$(shell echo "git_commit: $(GIT_COMMIT_HASH)" >> ansible/generated/vars.yml)
+	$(shell echo "project_s3_bucket: $(PROJECT_S3_BUCKET)" >> ansible/generated/vars.yml)
+
 
 ami-describe:
 	@aws ec2 describe-images --image-id $(AMI_ID)
