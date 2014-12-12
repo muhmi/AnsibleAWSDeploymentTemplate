@@ -1,17 +1,28 @@
 
 ![Ansible all the things](http://cdn.meme.am/instances/500x/56738879.jpg)
 
-Very much work in progress but now these bits of scripts do:
+** Ansible AWS project template 
 
-	- VPC creation
-	- Security groups
-	- Create IAM Instance Profiles and Roles for Baking an AMI and for running an instance from that AMI
+Aiming to handle as much as possible of managing an AWS project with Ansible.
 
-TODO:
+Note: I am building this to match my needs, things will shift as I learn how to do them.
 
-	- Fix the AMI bake step
+** Goal
+
+1. Setup VPC, IAM roles, security groups etc needed for a project. 
+
+2. Build AMIs for running a simple service, pre-installing things like Elixir.
+
+3. Launch an ASG with from that AMI. (maybe with ELB based health checks?) 
+
+4. Deploy a simple "hello world" app through AWS CodeDeploy on those instances
+
+
+** TODO
 	- Update my custom IAM modules to support inlining policy documents?
-	- Create an ASG from the AMI
+
+	- Provisioning instances, setup ASG (+ELB?)
+
 	- Create some example hello world deployment with CodeDeploy
 
 	
