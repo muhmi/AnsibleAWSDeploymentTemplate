@@ -5,7 +5,7 @@ PROJECT_S3_BUCKET := somehow-uniq-deploytest
 REGION := us-east-1
 
 # *Note*
-# You can run all ansible tasks in check like this:
+# You can run all ansible tasks in check mode like this:
 #
 #    $ DRY_RUN=1 make iam-setup 
 # 
