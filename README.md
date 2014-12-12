@@ -1,13 +1,13 @@
 
 ![Ansible all the things](http://cdn.meme.am/instances/500x/56738879.jpg)
 
-** Ansible AWS project template 
+# Ansible AWS project template 
 
 Aiming to handle as much as possible of managing an AWS project with Ansible.
 
 Note: I am building this to match my needs, things will shift as I learn how to do them.
 
-** Goal
+# Goal
 
 1. Setup VPC, IAM roles, security groups etc needed for a project. 
 
@@ -17,12 +17,9 @@ Note: I am building this to match my needs, things will shift as I learn how to 
 
 4. Deploy a simple "hello world" app through AWS CodeDeploy on those instances
 
-
-** TODO
-	- Update my custom IAM modules to support inlining policy documents?
-
-	- Provisioning instances, setup ASG (+ELB?)
-
-	- Create some example hello world deployment with CodeDeploy
+# TODO
+- Update my custom IAM modules to support inlining policy documents?
+- Provisioning instances, setup ASG (+ELB?)
+- Create some example hello world deployment with CodeDeploy
 
 	
