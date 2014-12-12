@@ -4,6 +4,14 @@ PROJECT := DeployTest
 PROJECT_S3_BUCKET := somehow-uniq-deploytest
 REGION := us-east-1
 
+# *Note*
+# You can run all ansible tasks in check like this:
+#
+#    $ DRY_RUN=1 make iam-setup 
+# 
+# That does the same as providing "-C" to ansible-playbook 
+#
+
 # ^- Little gotcha there that the Ansible scripts (for now) assume you have ansible/iam/{project}*.json files
 # It can feed to IAM as policy documents
 
@@ -30,42 +38,56 @@ GIT_COMMIT_HASH := $(shell git rev-parse --verify HEAD)
 APP_VERSION_LOG := "$(TIMESTAMP) $(shell git log --oneline -1)"
 APP_S3_KEY := "$(TIMESTAMP)-$(PROJECT).zip"
 
+ifneq ("$(origin DRY_RUN)", "undefined")
+	ANSIBLE_OPTS := -C
+endif
+
+
 setup: iam-setup ec2-setup
 
 teardown: ec2-teardown iam-teardown
 
-iam-setup: ansible/vars.yml
+iam-setup: generate_vars
 	@cd ansible && for role in $(IAM_ROLES); do \
 		echo "Creating IAM Role $$role"; \
 		ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook \
-			-i hosts iam_setup.yml \
-			--extra-vars="timestamp=$(TIMESTAMP); iam_role=$$role"; \
+			-i inventory/local \
+			plays/iam_setup.yml \
+			--extra-vars="timestamp=$(TIMESTAMP); iam_role=$$role" $(ANSIBLE_OPTS); \
 	done
 
-iam-teardown: ansible/vars.yml
+test:
+	echo $(ANSIBLE_OPTS)
+
+iam-teardown: generate_vars
 	@cd ansible && for role in $(IAM_ROLES); do \
+		echo "Teardown IAM $$role"; \
 		ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook \
-			-i hosts iam_teardown.yml \
-			--extra-vars="timestamp=$(TIMESTAMP); iam_role=$$role"; \
+			-i inventory/local \
+			plays/iam_teardown.yml \
+			--extra-vars="timestamp=$(TIMESTAMP); iam_role=$$role" $(ANSIBLE_OPTS); \
 	done
 
-ec2-setup: ansible/vars.yml
-	@cd ansible && ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook \
-		-i hosts ec2_setup.yml \
-		--extra-vars="timestamp=$(TIMESTAMP)"
+ec2-setup: generate_vars
+	cd ansible && ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook \
+		-i inventory/local \
+		plays/ec2_setup.yml \
+		--extra-vars="timestamp=$(TIMESTAMP)" $(ANSIBLE_OPTS) 
 
-ec2-teardown: ansible/vars.yml
-	@cd ansible && ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook \
-		-i hosts ec2_teardown.yml \
-		--extra-vars="timestamp=$(TIMESTAMP)"
+ec2-teardown: generate_vars
+	cd ansible && ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook \
+		-i inventory/local \
+		plays/ec2_teardown.yml \
+		--extra-vars="timestamp=$(TIMESTAMP)" $(ANSIBLE_OPTS) 
 
 # After setup you can run this to create the "golden AMI"
 # remember to update GAME_SERVER_AMI_ID after that!
-ami-bake: ansible/vars.yml
+ami-bake: generate_vars
 	cd ansible && ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook \
-		--private-key=$(REGION)-$(KEY_NAME).pem \
-		-i hosts bake.yml \
-		--extra-vars="timestamp=$(TIMESTAMP)"
+		--private-key=generated/$(REGION)-$(KEY_NAME).pem \
+		-i inventory/ec2.py \
+		plays/bake.yml \
+		--extra-vars="timestamp=$(TIMESTAMP)" $(ANSIBLE_OPTS) 
 
 # adding codedeploy stuff here so I remember what I need to do
 
@@ -90,7 +112,7 @@ codedeploy-push:
 		--source application
 
 # Yeah... but for now I want to drive some parameters from this Makefile instead of just using Ansible
-ansible/vars.yml: 
+generate_vars: 
 	$(shell echo '---' > ansible/vars.yml)
 	$(shell echo "project_name: $(PROJECT)" >> ansible/vars.yml)
 	$(shell echo "private_key: $(KEY_NAME)" >> ansible/vars.yml)
@@ -106,7 +128,4 @@ ansible/vars.yml:
 ami-describe:
 	@aws ec2 describe-images --image-id $(AMI_ID)
 
-clean:
-	@rm -f ansible/vars.yml
-
-.PHONY: launch-instance clean bake setup teardown ec2-setup ec2-teardown iam-setup iam-teardown ami-describe ansible/vars.yml
+.PHONY: launch-instance clean bake setup teardown ec2-setup ec2-teardown iam-setup iam-teardown ami-describe generate_vars

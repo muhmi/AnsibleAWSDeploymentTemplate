@@ -9,6 +9,5 @@
   local_action: 
     module: copy 
     content: "{{ result.key.private_key }}"
-    dest: "./{{ region }}-{{ private_key }}.pem"
+    dest: "../generated/{{ region }}-{{ private_key }}.pem"
     mode: 0400
-  when: "result.changed"

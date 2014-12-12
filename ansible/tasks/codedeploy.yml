@@ -2,4 +2,4 @@
   apt: pkg=ruby2.0 state=latest force=yes
 
 - name: Install CodeDeploy agent
-  script: scripts/install-codedeploy.sh
+  script: ../scripts/install-codedeploy.sh

@@ -4,15 +4,13 @@
   gather_facts: no
 
   vars_files:
-    - vars.yml
-    - settings.yml
-    - vpc_settings.yml
+    - ../generated/vars.yml
+    - ../generated/vpc_settings.yml
 
   tasks:
 
     - name: Launch server
-      local_action:
-        module: ec2
+      ec2:
         region: "{{region}}"
         vpc_subnet_id: "{{ vpc_subnets|random }}"
         assign_public_ip: yes
