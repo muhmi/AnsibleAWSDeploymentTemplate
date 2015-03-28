@@ -1,0 +1,27 @@
+- name: Ensure VPC exists for project
+  local_action:
+    module: ec2_vpc
+    state: present
+    cidr_block: 172.23.0.0/16
+    dns_support: yes
+    dns_hostnames: yes
+    resource_tags: { "Name":"{{project_name}}" }
+    region: "{{region}}"
+    internet_gateway: true
+    subnets:
+      - cidr: 172.23.1.0/24
+        resource_tags: { "Name":"{{project_name}}-1" }
+      - cidr: 172.23.2.0/24
+        resource_tags: { "Name":"{{project_name}}-2" }
+      - cidr: 172.23.3.0/24
+        resource_tags: { "Name":"{{project_name}}-3" }
+    route_tables:
+      - subnets:
+          - 172.23.1.0/24
+          - 172.23.2.0/24
+          - 172.23.3.0/24
+        routes:
+          - dest: 0.0.0.0/0
+            gw: igw
+    wait: yes
+  register: vpc

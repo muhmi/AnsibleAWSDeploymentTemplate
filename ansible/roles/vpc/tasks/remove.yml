@@ -1,0 +1,9 @@
+- name: Remove VPC for project
+  local_action:
+    module: ec2_vpc
+    state: absent
+    cidr_block: 172.23.0.0/16
+    resource_tags: { "Name":"{{project_name}}" }
+    region: "{{region}}"
+    wait: yes
+  register: vpc
