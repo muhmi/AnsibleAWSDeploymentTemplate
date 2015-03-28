@@ -1,0 +1,4 @@
+- include: elb_create.yml
+  when: setup == True
+- include: elb_remove.yml
+  when: teardown == True

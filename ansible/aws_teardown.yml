@@ -1,0 +1,18 @@
+---
+#
+# TODO
+#
+- hosts: localhost
+  connection: local
+  gather_facts: no
+  vars:
+    teardown: True
+  vars_files:
+    - "group_vars/{{app_env}}.yml"
+  roles:
+    - ec2_sg
+    - ec2_key
+    - vpc
+    - iam
+#   - s3
+

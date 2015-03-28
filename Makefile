@@ -1,131 +1,65 @@
+ifeq ("$(origin APP_ENV)", "undefined")
+	APP_ENV := dev
+endif
 
-# 
-PROJECT := DeployTest
-PROJECT_S3_BUCKET := somehow-uniq-deploytest
+#
+#
+#
+
+PROJECT := AnsibleTemplateTest
 REGION := us-east-1
 
-# *Note*
-# You can run all ansible tasks in check mode like this:
-#
-#    $ DRY_RUN=1 make iam-setup 
-# 
-# That does the same as providing "-C" to ansible-playbook 
-#
+IAM_ROLE_NAME := $(PROJECT)-$(APP_ENV)
 
-# ^- Little gotcha there that the Ansible scripts (for now) assume you have ansible/iam/{project}*.json files
-# It can feed to IAM as policy documents
+KEY_NAME := $(PROJECT)-$(APP_ENV)
 
-# Ubuntu from market place, we install our software on to and make our AMI from
-BASE_AMI_ID := ami-2651904e
-BASE_AMI_SNAPSHOT_ID := snap-a74a6e0f
-
-# private key
-KEY_NAME := $(PROJECT)
-
-# you should limit its access to S3 buckets really needed 
-# for. ex. http://docs.aws.amazon.com/codedeploy/latest/userguide/how-to-create-iam-instance-profile.html
-IAM_ROLE_NAME := $(PROJECT)
-
-# This role is only used for creating AMIs it needs more access to EC2, fix ansible/iam/{IAM_ROLE_NAME}Baker*.json
-BAKE_IAM_ROLE_NAME := $(IAM_ROLE_NAME)Baker
-
-# List of IAM roles managed by us
-IAM_ROLES := $(IAM_ROLE_NAME) $(BAKE_IAM_ROLE_NAME) CodeDeploy
+PRIVATE_KEY := $(PROJECT)-$(REGION)-$(APP_ENV).pem
 
 TIMESTAMP := $(shell date +%Y%m%d%H%M%S)
 GIT_COMMIT_HASH := $(shell git rev-parse --verify HEAD)
 
-APP_VERSION_LOG := "$(TIMESTAMP) $(shell git log --oneline -1)"
-APP_S3_KEY := "$(TIMESTAMP)-$(PROJECT).zip"
+ANSIBLE_OPTS := -e project_name=$(PROJECT) \
+				-e app_env=$(APP_ENV) \
+				-e key_name=$(KEY_NAME) \
+				-e region=$(REGION) \
+				--private-key=$(PRIVATE_KEY) \
+				-u ubuntu
 
-ifneq ("$(origin DRY_RUN)", "undefined")
-	ANSIBLE_OPTS := -C
-endif
-
-setup: iam-setup ec2-setup
-
-teardown: ec2-teardown iam-teardown
-
-iam-setup: generate_vars
-	@cd ansible && for role in $(IAM_ROLES); do \
-		echo "Creating IAM Role $$role"; \
-		ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook \
-			-i inventory/local \
-			iam_setup.yml \
-			--extra-vars="iam_role=$$role" $(ANSIBLE_OPTS); \
+# https://gist.github.com/prwhite/8168133
+help: ## This help dialog.
+	@IFS=$$'\n' ; \
+	help_lines=(`fgrep -h "##" $(MAKEFILE_LIST) | fgrep -v fgrep | sed -e 's/\\$$//' | sed -e 's/##/:/'`); \
+	printf "%-30s %s\n" "target" "help" ; \
+	printf "%-30s %s\n" "------" "----" ; \
+	for help_line in $${help_lines[@]}; do \
+		IFS=$$':' ; \
+		help_split=($$help_line) ; \
+		help_command=`echo $${help_split[0]} | sed -e 's/^ *//' -e 's/ *$$//'` ; \
+		help_info=`echo $${help_split[2]} | sed -e 's/^ *//' -e 's/ *$$//'` ; \
+		printf '\033[36m'; \
+		printf "%-30s %s" $$help_command ; \
+		printf '\033[0m'; \
+		printf "%s\n" $$help_info; \
 	done
 
-test:
-	echo $(ANSIBLE_OPTS)
+all: help
 
-iam-teardown: generate_vars
-	@cd ansible && for role in $(IAM_ROLES); do \
-		echo "Teardown IAM $$role"; \
-		ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook \
-			-i inventory/local \
-			iam_teardown.yml \
-			--extra-vars="iam_role=$$role" $(ANSIBLE_OPTS); \
-	done
+setup: ## Create AWS setup needed by the project
+	cd ansible && ansible-playbook aws_setup.yml -i inventory/local $(ANSIBLE_OPTS)
 
-ec2-setup: generate_vars
-	cd ansible && ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook \
-		-i inventory/local \
-		ec2_setup.yml \
-		$(ANSIBLE_OPTS) 
+setup: ## Teardown AWS setup
+	cd ansible && ansible-playbook aws_setup.yml -i inventory/local $(ANSIBLE_OPTS)
 
-ec2-teardown: generate_vars
-	cd ansible && ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook \
-		-i inventory/local \
-		ec2_teardown.yml \
-		$(ANSIBLE_OPTS) 
+launch: ## Launch servers, will create new ones if needed
+	cd ansible && ansible-playbook launch_servers.yml -i inventory/local $(ANSIBLE_OPTS)
 
-# After setup you can run this to create the "golden AMI"
-# remember to update GAME_SERVER_AMI_ID after that!
-ami-bake: generate_vars
-	cd ansible && ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook \
-		--private-key=generated/$(REGION)-$(KEY_NAME).pem \
-		-i inventory/ec2.py \
-		bake.yml \
-		$(ANSIBLE_OPTS) 
+install: ## Install software on servers
+	cd ansible && ansible-playbook -i inventory/dev/ec2.py setup_servers.yml $(ANSIBLE_OPTS)
 
-# adding codedeploy stuff here so I remember what I need to do
+deploy: ## Deploy the application to servers 
+	cd ansible && ansible-playbook -i inventory/dev/ec2.py deploy.yml $(ANSIBLE_OPTS)
 
-codedeploy-create-app:
-	aws deploy create-application --application-name $(PROJECT)
+ping: ## Test connection to boxes
+	cd ansible && ansible -i inventory/dev/ec2.py -u ubuntu "*" -m ping --private-key=$(PRIVATE_KEY)
 
-# target ec2 instances with certain tag for deployment
-codedeploy-create-deployment:
-	aws deploy create-deployment-group \
-		--application-name $(PROJECT) \
-		--deployment-group-name $(PROJECT)Instances \
-		--ec2-tag-filters "Key=Group,Value=$(PROJECT),Type=KEY_AND_VALUE" \
-		--service-role-arn $(shell aws iam get-role --role-name CodeDeploy --query "Role.Arn" --output text)
-
-# package and upload a new version of the application
-codedeploy-push:
-	aws deploy push \
-		--application-name $(PROJECT) \
-		--description $(APP_VERSION_LOG) \
-		--ignore-hidden-files \
-		--s3-location s3://$(PROJECT_S3_BUCKET)/$(APP_S3_KEY) \
-		--source application
-
-generate_vars:
-	$(shell echo "---" > ansible/generated/vars.yml)
-	$(shell echo "project_name: $(PROJECT)" >> ansible/generated/vars.yml)
-	$(shell echo "timestamp: $(TIMESTAMP)" >> ansible/generated/vars.yml)
-	$(shell echo "private_key: $(KEY_NAME)" >> ansible/generated/vars.yml)
-	$(shell echo "region: $(REGION)" >> ansible/generated/vars.yml)
-	$(shell echo "baker_iam: $(BAKE_IAM_ROLE_NAME)" >> ansible/generated/vars.yml)
-	$(shell echo "instance_iam: $(IAM_ROLE_NAME)" >> ansible/generated/vars.yml)
-	$(shell echo "base_ami: $(BASE_AMI_ID)" >> ansible/generated/vars.yml)
-	$(shell echo "key_name: $(KEY_NAME)" >> ansible/generated/vars.yml)
-	$(shell echo "creator: $$USER" >> ansible/generated/vars.yml)
-	$(shell echo "git_commit: $(GIT_COMMIT_HASH)" >> ansible/generated/vars.yml)
-	$(shell echo "project_s3_bucket: $(PROJECT_S3_BUCKET)" >> ansible/generated/vars.yml)
-
-
-ami-describe:
-	@aws ec2 describe-images --image-id $(AMI_ID)
-
-.PHONY: launch-instance clean bake setup teardown ec2-setup ec2-teardown iam-setup iam-teardown ami-describe generate_vars
+.PHONY: launch setup all ping install deploy

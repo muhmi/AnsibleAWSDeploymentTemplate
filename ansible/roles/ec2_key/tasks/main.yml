@@ -1,0 +1,4 @@
+- include: key_create.yml
+  when: setup == True
+- include: key_remove.yml
+  when: teardown == True

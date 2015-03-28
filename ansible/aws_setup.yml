@@ -1,0 +1,15 @@
+---
+#
+# Basic EC2 setup for the project
+#
+- hosts: localhost
+  connection: local
+  gather_facts: no
+  vars_files:
+    - "group_vars/{{app_env}}.yml"
+  roles:
+    - s3
+    - vpc
+    - iam
+    - ec2_key
+    - ec2_sg

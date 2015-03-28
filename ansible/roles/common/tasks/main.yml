@@ -1,0 +1,77 @@
+- name: Add Erlang Solutions APT repository
+  apt_repository: repo='deb http://packages.erlang-solutions.com/ubuntu trusty contrib' state=present update_cache=yes
+  register: apt_repo
+
+- name: Install build tools
+  apt: pkg=build-essential state=latest
+  when: apt_repo.changed
+
+- name: Install Erlang
+  apt: pkg={{item}} state=latest force=yes
+  with_items:
+      - erlang
+      - erlang-ssl
+  when: apt_repo.changed
+
+- name: Install Elixir
+  apt: pkg=elixir state=latest force=yes
+  when: apt_repo.changed
+
+- name: Install htop
+  apt: pkg=htop state=latest force=yes
+  when: apt_repo.changed
+
+- name: Install Git
+  apt: pkg=git state=latest
+  when: apt_repo.changed
+
+- name: Install ntp
+  apt: pkg=ntp state=latest
+  when: apt_repo.changed
+
+- name: Install awscli
+  apt: pkg=awscli state=latest
+  when: apt_repo.changed
+
+- name: Create user for the application
+  user: home={{project_home}} name={{project_name}} state=present
+  register: user
+
+- name: Update /etc/security/limits.conf
+  sudo: yes
+  lineinfile: dest=/etc/security/limits.conf
+              insertbefore='# End of file'
+              line="{{item}}"
+              state=present
+  with_items:
+   - "root soft nofile 65536"
+   - "root hard nofile 65536"
+   - "* soft nofile 65536"
+   - "* hard nofile 65536"
+  when: user.changed
+
+- name: Update /etc/sysctl.conf
+  sudo: yes
+  lineinfile: dest=/etc/sysctl.conf
+              insertbefore='# Log Martian Packets'
+              line="{{item}}"
+              state=present
+  with_items:
+    - "net.ipv4.tcp_tw_recycle = 1"
+    - "net.ipv4.tcp_tw_reuse = 1"
+    - "net.ipv4.ip_local_port_range = 10240    65535"
+  when: user.changed
+
+- name: "restart sysctl"
+  shell: "sudo sysctl -p /etc/sysctl.conf"
+  when: user.changed
+
+- name: "Install Hex and Rebar (used for installing deps)"
+  shell: mix do local.hex --force, local.rebar --force
+  environment:
+    MIX_ENV: "{{app_env}}"
+  sudo_user: "{{project_name}}"
+  when: user.changed
+
+- name: "Create log directory for application"
+  file: path="{{project_logs}}" state=directory owner="{{project_name}}"

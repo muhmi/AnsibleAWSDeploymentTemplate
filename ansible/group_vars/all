@@ -1,0 +1,19 @@
+iam_role: "{{ project_name }}-{{app_env}}"
+
+sg_name: "{{ project_name }}-{{app_env}}"
+
+elb_name: "{{ project_name }}-{{app_env}}"
+
+private_key: "{{ project_name }}-{{ region }}-{{app_env}}.pem"
+
+project_home: "/usr/local/{{project_name}}"
+project_logs: "/var/log/{{project_name}}"
+
+deploy_path: "{{project_home}}/deploys/{{deploy_timestamp}}_{{deploy_version}}"
+
+setup: True
+teardown: False
+
+# https://aws.amazon.com/marketplace/ordering/ref=dtl_psb_continue?ie=UTF8&productId=bb634ce9-ed92-47ac-a3dc-66e8ab3aaf75&region=us-east-1
+server_image_id: ami-767a391e
+instance_type: m3.medium

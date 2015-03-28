@@ -1,0 +1,7 @@
+- name: "Create S3 bucket"
+  local_action:
+    module: s3
+    bucket: "{{project_s3_bucket}}"
+    mode: create
+    region: "{{region}}"
+  register: s3_bucket

@@ -1,3 +1,0 @@
-
-- name: Install Mono
-  apt: pkg=mono-complete state=latest

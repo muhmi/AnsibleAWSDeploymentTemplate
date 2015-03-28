@@ -1,0 +1,24 @@
+- name: "Create IAM role"
+  local_action:
+    region: "us-east-1"
+    module: aws_iam_role
+    role_name: "{{iam_role}}"
+    assume_role_policy_document: "{{ lookup('template', '../templates/assume_role.json') }}"
+- name: "Upload policy EC2-Permissions"
+  local_action:
+    module: aws_iam_role_policy
+    region: "us-east-1"
+    role_name: "{{iam_role}}"
+    policy_name: "{{iam_role}}-EC2-Permissions"
+    policy_document: "{{ lookup('template', '../templates/policy.json') }}"
+- name: "Create instance profile"
+  local_action:
+    region: "us-east-1"
+    module: aws_iam_instance_profile
+    profile_name: "{{iam_role}}InstanceProfile"
+- name: "Add our role to instance profile"
+  local_action:
+    region: "us-east-1"
+    module: aws_iam_instance_profile_role
+    profile_name: "{{iam_role}}InstanceProfile"
+    role_name: "{{iam_role}}"

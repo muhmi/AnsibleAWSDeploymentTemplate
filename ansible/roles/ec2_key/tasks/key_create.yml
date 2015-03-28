@@ -1,0 +1,14 @@
+- name: Create key pair
+  local_action:
+    module: ec2_key
+    region: "{{region}}"
+    name: "{{private_key}}"
+  register: result
+
+- name: Ensure private key file exists locally
+  local_action: 
+    module: copy 
+    content: "{{ result.key.private_key }}"
+    dest: "./{{ private_key }}"
+    mode: 0400
+  when: "result.changed"

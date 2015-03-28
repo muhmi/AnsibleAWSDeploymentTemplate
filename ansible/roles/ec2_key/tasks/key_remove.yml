@@ -1,0 +1,6 @@
+- name: Delete key pair
+  local_action:
+    module: ec2_key
+    region: "{{region}}"
+    name: "{{private_key}}"
+    state: absent
