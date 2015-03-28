@@ -48,7 +48,7 @@ setup: ## Create AWS setup needed by the project
 	cd ansible && ansible-playbook aws_setup.yml -i inventory/local $(ANSIBLE_OPTS)
 
 teardown: ## Teardown AWS setup
-	cd ansible && ansible-playbook aws_setup.yml -i inventory/local $(ANSIBLE_OPTS)
+	cd ansible && ansible-playbook aws_teardown.yml -i inventory/local $(ANSIBLE_OPTS)
 
 launch: ## Launch servers, will create new ones if needed
 	cd ansible && ansible-playbook launch_servers.yml -i inventory/local $(ANSIBLE_OPTS)

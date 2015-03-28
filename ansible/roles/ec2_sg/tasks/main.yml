@@ -1,38 +1,4 @@
-- name: Configure security group for severs
-  local_action:
-    module: ec2_group
-    name: "{{sg_name}}"
-    description: "{{project_name}} {{app_env}} server security group"
-    vpc_id: "{{ vpc.vpc_id }}"
-    region: "{{region}}"
-    purge_rules: true
-    # write you
-    rules:
-      # SSH
-      - proto: tcp
-        from_port: 22
-        to_port: 22
-        cidr_ip: 0.0.0.0/0
-      # http
-      - proto: tcp
-        from_port: 8080
-        to_port: 8080
-        cidr_ip: 0.0.0.0/0
-  register: sg
-
-- name: Configure security group for ELB
-  local_action:
-    module: ec2_group
-    name: "{{sg_name}}-elb"
-    description: "{{project_name}} {{app_env}} server security group"
-    vpc_id: "{{ vpc.vpc_id }}"
-    region: "{{region}}"
-    purge_rules: true
-
-    rules:
-      # SSH
-      - proto: tcp
-        from_port: 80
-        to_port: 80
-        cidr_ip: 0.0.0.0/0
-  register: elb_sg
+- include: create.yml
+  when: setup
+- include: remove.yml
+  when: teardown

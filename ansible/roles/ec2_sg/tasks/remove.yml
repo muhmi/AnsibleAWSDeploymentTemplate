@@ -1,0 +1,19 @@
+- name: Remove security group for severs
+  local_action:
+    module: ec2_group
+    name: "{{sg_name}}"
+    description: "{{project_name}} {{app_env}} server security group"
+    state: absent
+    vpc_id: "{{ vpc.vpc_id }}"
+    region: "{{region}}"
+  register: sg
+
+- name: Remove security group for ELB
+  local_action:
+    module: ec2_group
+    name: "{{sg_name}}-elb"
+    description: "{{project_name}} {{app_env}} server security group"
+    state: absent
+    vpc_id: "{{ vpc.vpc_id }}"
+    region: "{{region}}"
+  register: elb_sg

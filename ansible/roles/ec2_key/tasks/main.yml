@@ -1,4 +1,4 @@
 - include: key_create.yml
-  when: setup == True
+  when: setup
 - include: key_remove.yml
-  when: teardown == True
+  when: teardown

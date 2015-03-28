@@ -5,14 +5,15 @@
 - hosts: localhost
   connection: local
   gather_facts: no
-  vars:
-    teardown: True
   vars_files:
     - "group_vars/{{app_env}}.yml"
+  vars:
+    setup: false
+    teardown: true
   roles:
-    - ec2_sg
     - ec2_key
     - vpc
+    - ec2_sg
     - iam
 #   - s3
 
