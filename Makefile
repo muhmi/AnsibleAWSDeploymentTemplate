@@ -7,7 +7,12 @@ endif
 #
 
 PROJECT := AnsibleTemplateTest
+
 REGION := us-east-1
+
+ifneq ("$(origin AWS_DEFAULT_REGION)", "undefined")
+	REGION := $(AWS_DEFAULT_REGION)
+endif
 
 IAM_ROLE_NAME := $(PROJECT)-$(APP_ENV)
 
@@ -29,6 +34,7 @@ ANSIBLE_OPTS := -e project_name=$(PROJECT) \
 help: ## This help dialog.
 	@IFS=$$'\n' ; \
 	help_lines=(`fgrep -h "##" $(MAKEFILE_LIST) | fgrep -v fgrep | sed -e 's/\\$$//' | sed -e 's/##/:/'`); \
+	printf "env %s, region %s\n" $(APP_ENV) $(REGION); \
 	printf "%-30s %s\n" "target" "help" ; \
 	printf "%-30s %s\n" "------" "----" ; \
 	for help_line in $${help_lines[@]}; do \
