@@ -1,0 +1,21 @@
+- name: Clone the project repository from GitHub
+  git: repo=https://github.com/chrismccord/phoenix_chat_example.git dest="{{deploy_path}}" accept_hostkey=yes
+  sudo_user: "{{project_name}}"
+  register: server_source
+
+- name: Install Hex and Rebar (used for installing deps)
+  shell: mix do local.hex --force, local.rebar --force
+  environment:
+    MIX_ENV: prod
+  sudo_user: "{{project_name}}"
+  when: server_source.changed
+
+- name: Update dependencies
+  shell: mix do deps.get chdir="{{deploy_path}}"
+  sudo_user: "{{project_name}}"
+  when: server_source.changed
+
+- name: Update upstart config
+  template: src="upstart.conf.j2" dest="/etc/init/{{project_name}}.conf"
+  notify:
+    - restart application

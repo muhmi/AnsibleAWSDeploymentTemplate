@@ -8,7 +8,7 @@
   vars_files:
     - "group_vars/{{app_env}}.yml"
   roles:
-    - s3
+    #- s3
     - vpc
     - iam
     - ec2_key

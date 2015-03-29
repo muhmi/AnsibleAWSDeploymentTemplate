@@ -1,0 +1,16 @@
+start on runlevel [2345]
+stop on runlevel [!2345]
+
+respawn
+
+chdir {{deploy_path}}
+
+env HOME={{project_home}}
+env MIX_ENV={{app_env}}
+env LANG=en_US.UTF-8
+env PORT=8080
+
+setuid {{project_name}}
+setgid {{project_name}}
+
+exec mix phoenix.server
