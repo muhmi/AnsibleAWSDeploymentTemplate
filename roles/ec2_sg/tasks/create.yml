@@ -1,3 +1,4 @@
+- debug: msg="{{vpc}}"
 - name: Configure security group for severs
   local_action:
     module: ec2_group

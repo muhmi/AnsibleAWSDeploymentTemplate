@@ -4,9 +4,9 @@
     name: "{{sg_name}}"
     description: "{{project_name}} {{app_env}} server security group"
     state: absent
-    vpc_id: "{{ vpc.vpc_id }}"
+    vpc_id: "{{ removed_vpc.vpc_id }}"
     region: "{{region}}"
-  register: sg
+  register: removed_sg
 
 - name: Remove security group for ELB
   local_action:
@@ -14,6 +14,6 @@
     name: "{{sg_name}}-elb"
     description: "{{project_name}} {{app_env}} server security group"
     state: absent
-    vpc_id: "{{ vpc.vpc_id }}"
+    vpc_id: "{{ removed_vpc.vpc_id }}"
     region: "{{region}}"
-  register: elb_sg
+  register: removed_elb_sg

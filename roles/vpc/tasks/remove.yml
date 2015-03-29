@@ -6,4 +6,4 @@
     resource_tags: { "Name":"{{project_name}}" }
     region: "{{region}}"
     wait: yes
-  register: vpc
+  register: removed_vpc
