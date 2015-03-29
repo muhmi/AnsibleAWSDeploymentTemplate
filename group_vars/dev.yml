@@ -1,1 +1,4 @@
 # you could override some of the group vars here
+
+# https://aws.amazon.com/marketplace/ordering?productId=bb634ce9-ed92-47ac-a3dc-66e8ab3aaf75
+server_image_id: ami-4ec4f653

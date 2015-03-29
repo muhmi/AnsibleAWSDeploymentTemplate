@@ -5,12 +5,15 @@
   vars_files:
     - "group_vars/{{app_env}}.yml"
 
+  roles:
+    - vpc
+
   tasks:
 
     - name: Launch servers
       ec2:
         region: "{{region}}"
-        vpc_subnet_id: "{{ vpc.subnets |random }}"
+        vpc_subnet_id: "{{ (vpc.subnets|random).id }}"
         assign_public_ip: yes
         image: "{{server_image_id}}"
         key_name: "{{private_key}}"
