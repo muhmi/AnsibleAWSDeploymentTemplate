@@ -51,21 +51,21 @@ help: ## This help dialog.
 all: help
 
 setup: ## Create AWS setup needed by the project
-	cd ansible && ansible-playbook aws_setup.yml -i inventory/local $(ANSIBLE_OPTS)
+	ansible-playbook aws_setup.yml -i inventory/local $(ANSIBLE_OPTS)
 
 teardown: ## Teardown AWS setup
-	cd ansible && ansible-playbook aws_teardown.yml -i inventory/local $(ANSIBLE_OPTS)
+	ansible-playbook aws_teardown.yml -i inventory/local $(ANSIBLE_OPTS)
 
 launch: ## Launch servers, will create new ones if needed
-	cd ansible && ansible-playbook launch_servers.yml -i inventory/local $(ANSIBLE_OPTS)
+	ansible-playbook launch_servers.yml -i inventory/local $(ANSIBLE_OPTS)
 
 install: ## Install software on servers
-	cd ansible && ansible-playbook -i inventory/dev/ec2.py setup_servers.yml $(ANSIBLE_OPTS)
+	ansible-playbook -i inventory/dev/ec2.py setup_servers.yml $(ANSIBLE_OPTS)
 
 deploy: ## Deploy the application to servers 
-	cd ansible && ansible-playbook -i inventory/dev/ec2.py deploy.yml $(ANSIBLE_OPTS)
+	ansible-playbook -i inventory/dev/ec2.py deploy.yml $(ANSIBLE_OPTS)
 
 ping: ## Test connection to boxes
-	cd ansible && ansible -i inventory/dev/ec2.py -u ubuntu "*" -m ping --private-key=$(PRIVATE_KEY)
+	ansible -i inventory/dev/ec2.py -u ubuntu "*" -m ping --private-key=$(PRIVATE_KEY)
 
 .PHONY: launch setup all ping install deploy
